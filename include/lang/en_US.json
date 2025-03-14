@@ -1,0 +1,182 @@
+{
+  "common": {
+    "title": "SecretNote Guestbook Installation Wizard",
+    "brand": "Sapphire",
+    "version_info": "Version 2.1.0, based on PHP+MySQL database, derived from",
+    "version_suffix": "V11-0 version",
+    "reconstruction_description": "Reconstructed under PHP8.0, integrating the original concepts and elements to create a unique new version",
+    "next": "Next",
+    "prev": "Previous",
+    "error_icon": "⚠️"
+  },
+  "step_titles": {
+    "step": "Step {current}/5",
+    "step1": "Installation License Agreement",
+    "step2": "System Environment Verification",
+    "step3": "Database Configuration",
+    "step4": "Administrator Settings",
+    "step5": "Installation Complete"
+  },
+  "step1": {
+    "license_content": "Installation License Agreement Content",
+    "agree_terms": "I have read and agree to the terms above",
+    "start_installation": "Start Installation"
+  },
+  "step2": {
+    "environment_check": "System Environment Verification",
+    "back_to_previous": "Back",
+    "continue": "Continue"
+  },
+  "step3": {
+    "database_configuration": "Database Configuration",
+    "database_host": "Database Host",
+    "database_user": "Database User",
+    "database_password": "Database Password",
+    "database_name": "Database Name",
+    "table_prefix": "Table Prefix",
+    "test_connection": "Test Connection and Save Configuration"
+  },
+  "step4": {
+    "admin_settings": "Administrator Settings",
+    "admin_username": "Administrator Username",
+    "login_password": "Login Password",
+    "confirm_password": "Confirm Password",
+    "password_requirements": "Password requirements: At least 8 characters, including uppercase letters and numbers",
+    "create_admin_account": "Create Account and Continue"
+  },
+  "step5": {
+    "installation_success": "Installation Successful!",
+    "guestbook_ready": "Your guestbook is ready",
+    "security_recommendations": "Security Recommendations",
+    "delete_install_file": "Immediately delete the install.php file",
+    "set_config_readonly": "Set config.php to read-only (chmod 644)",
+    "configure_web_server": "It is recommended to configure Web server access restrictions",
+    "visit_homepage": "Visit Homepage",
+    "admin_console": "Admin Console"
+  },
+  "language_switcher": {
+    "select_language": "Select Language",
+    "english": "English",
+    "chinese": "Chinese",
+    "japanese": "Japanese"
+  },
+  "error_messages": {
+    "installation_failed": "Installation Failed",
+    "must_agree_terms": "You must agree to the license terms to continue with the installation",
+    "environment_check_failed": "Environment check failed, cannot continue",
+    "unable_to_create_config": "Unable to create configuration file",
+    "database_info_required": "Database information cannot be empty",
+    "database_connection_failed": "Database connection failed",
+    "existing_tables_found": "Existing tables detected, please change prefix or database",
+    "admin_info_required": "Administrator information cannot be empty",
+    "passwords_do_not_match": "The passwords entered twice do not match",
+    "password_requirements_not_met": "Password must be at least 8 characters, including uppercase letters and numbers",
+    "config_write_failed": "Configuration file write failed, please check directory permissions",
+    "charset_setting_failed": "Unable to set database connection charset to utf8mb4",
+    "database_initialization_failed": "Database initialization failed",
+    "lock_file_write_failed": "Installation lock file write failed"
+  },
+  "environment_check": {
+    "php_version": "PHP 8.0+",
+    "mysqli_extension": "MySQLi Extension",
+    "config_file_writable": "Configuration File Writable",
+    "gd_library": "GD Library",
+    "mbstring_extension": "MBString Extension"
+  },
+  "login_page": {
+    "title": "Sapphire Guestbook - Administrator Login",
+    "header": "Administrator Login",
+    "form": {
+      "username_label": "Administrator Account",
+      "password_label": "Login Password",
+      "submit_button": "Login"
+    },
+    "csrf_token": "Security Token",
+    "error_messages": {
+      "csrf_token_invalid": "Invalid security token",
+      "empty_credentials": "Username and password cannot be empty",
+      "user_not_found": "User does not exist",
+      "password_incorrect": "Incorrect password",
+      "database_error": "Database error",
+      "login_failed": "Login error"
+    },
+    "logging": {
+      "login_attempt": "Login attempt - Username: %s IP: %s",
+      "login_failed_attempt": "Login failed - Username: %s IP: %s"
+    }
+  },
+  "security_headers": {
+    "x_frame_options": "X-Frame-Options",
+    "x_xss_protection": "X-XSS-Protection",
+    "x_content_type_options": "X-Content-Type-Options",
+    "content_security_policy": "Content-Security-Policy",
+    "referrer_policy": "Referrer-Policy"
+  },
+  "session": {
+    "cookie_secure": "Cookie Secure",
+    "cookie_httponly": "Cookie HttpOnly",
+    "cookie_samesite": "Cookie SameSite",
+    "session_name": "ADMIN_SESS"
+  },
+  "errors": {
+    "already_installed": "System already installed!",
+    "remove_lock_hint": "Please delete the install.lock file and then reinstall",
+    "invalid_license_path": "Invalid license path",
+    "license_not_readable": "License file not readable",
+    "license_size_limit": "License file size exceeds 100KB limit",
+    "license_load_failed": "License loading failed",
+    "csrf_token_invalid": "CSRF token verification failed",
+    "must_agree_terms": "You must agree to the license terms",
+    "environment_check_failed": "Environment check failed",
+    "unable_to_create_config": "Unable to create configuration file",
+    "database_info_required": "Database information must be complete",
+    "database_connection_failed": "Database connection failed",
+    "existing_tables_found": "Existing tables detected",
+    "admin_info_required": "Administrator information must be complete",
+    "passwords_do_not_match": "Passwords do not match",
+    "password_requirements_not_met": "Password does not meet strength requirements (at least 8 characters, including uppercase letters and numbers)",
+    "config_write_failed": "Configuration file write failed",
+    "charset_setting_failed": "Character set setting failed",
+    "database_initialization_failed": "Database initialization failed",
+    "lock_file_write_failed": "Installation lock file write failed"
+  },
+  "database": {
+    "category_id": "Category ID",
+    "comment_title": "Comment Title",
+    "nickname": "User Nickname",
+    "homepage": "Homepage URL",
+    "content": "Comment Content",
+    "allow_html": "Allow HTML Tags",
+    "editor_type": "Editor Type",
+    "version": "Content Version Number",
+    "reply": "Administrator Reply",
+    "is_top": "Top Priority",
+    "review_status": "Review Status",
+    "comment_type": "Comment Type",
+    "encryption_mode": "Encryption Mode",
+    "access_password": "Access Password",
+    "ip_address": "IP Address",
+    "ip_location": "IP Geolocation",
+    "browser_fingerprint": "Browser Fingerprint",
+    "creation_time": "Creation Time",
+    "reply_time": "Reply Time",
+    "view_time": "Last View Time",
+    "media_type": "Media Type",
+    "local_image": "Local Image Path",
+    "external_video": "External Video URL",
+    "video_thumbnail": "Video Thumbnail",
+    "file_size": "File Size (bytes)"
+  },
+  "categories": {
+    "whisper_zone": "Whisper Zone",
+    "user_feedback": "User Feedback",
+    "technical_discussion": "Technical Discussion",
+    "product_suggestions": "Product Suggestions"
+  },
+  "demo": {
+    "title": "System Demo",
+    "content": "🎉 Welcome to experience the new guestbook system!\n\nMain updates and features:\n🌟 Video embedding function\nNow you can embed external video links in comments to make your comments more interesting. Just enter the video URL in the \"External Video URL\" field, and the video thumbnail will be generated and displayed automatically.\n\n🔄 Multi-level reply system\nThe comment system supports multi-level replies. You can easily reply to other users' comments in a nested manner. The system manages the hierarchy of replies automatically, making the conversation more in-depth and organized.\n\n🔒 Enhanced security\nWe have comprehensively upgraded the security of the comment system, including adding password protection for access (whisper function) to ensure your comment data is more secure.\n\n🌐 Personal homepage link\nThe comment system supports displaying user personal homepage links. Just enter a URL starting with \"http\", and a clickable personal homepage link will be displayed in the comment.\n\n🤫 Whisper function\nYou can post encrypted comments (whispers). Just check the encryption mode and set an access password to protect your private comments from being viewed by others. Note: The default password is just an example, please set your own password.\n\n✅ New reporting function\nIf you think a comment is inappropriate, you can use the reporting function in the lower right corner, and the content will be removed from display.\n\n🎨 Multimedia support\nThe comment system supports uploading local images and embedding external videos. You can display rich multimedia content in your comments to make them more attractive. Tip: Check the right-side image display area to experience the charm of multimedia comments.\n\n📝 Demo comment operation guide\n    Reply to comments: Try replying to this message to experience the convenience of the multi-level reply system.\n    Check review status: Pay attention to the review status marks in the comment list to see if your comment has been approved.\n    Upload images/videos: When commenting, you can choose to upload local images or embed external videos to enrich comment content.\n    Set whispers: If you want to post anonymous private comments, check the encryption mode and set an access password.\n\n🌟 Important note\nComments you post do not require approval and will be immediately published to the homepage upon successful posting. You can refresh the page to view them. Since we have enabled banned word and meaningless comment filtering functions, feel free to leave comments.\n\n📢 Warm reminder\nIf you encounter any problems or suggestions, please feel free to leave an anonymous comment in the suggestions section.\n\nHope you have wonderful memories in the new guestbook system!",
+    "default_nickname": "SecretNote Guestbook",
+    "default_location": "China - Shanghai"
+  }
+}

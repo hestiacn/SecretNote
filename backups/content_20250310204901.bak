@@ -1,0 +1,58 @@
+{
+    "global": {
+        "page_title": "蓝宝石留言本 - 首页",
+        "all_categories": "全部分类",
+        "search_btn": "搜索",
+        "pagination": {
+            "first": "&laquo; 首页",
+            "prev": "上一页",
+            "next": "下一页",
+            "last": "末页 &raquo;"
+        },
+        "footer": {
+            "copyright": "版权所有 © 2000 - {year} 蓝宝石留言本 保留所有权利",
+            "beian": "浙ICP备12345678号",
+            "tech_info": "基于PHP %s 和 MySQL %s 构建",
+            "stats": "总访问量：%d 次"
+        }
+    },
+    "index": {
+        "main_title": "蓝宝石留言本",
+        "welcome_text": "由于原版本人安装真心不适应，参考它的数据表自己写了一个，舒服多了。本留言系统有如下更新！详情请点击",
+        "quick_view": "快速查看：",
+        "total_msg": "总留言数",
+        "search_placeholder": "请输入留言内容进行查询",
+        "search_options": {
+            "all": "全部范围",
+            "thetitle": "留言标题",
+            "content": "留言内容",
+            "nicheng": "留言作者",
+            "reply": "留言回复",
+            "info": "联系信息"
+        },
+        "no_results": {
+            "icon_class": "bi-chat-square-text",
+            "title": "没有找到相关留言",
+            "subtitle": "请尝试其他分类或调整搜索关键词"
+        }
+    },
+    "messages": {
+        "encrypted_notice": "此内容已加密，需要密码访问",
+        "password_placeholder": "输入访问密码",
+        "password_button": "解锁内容",
+        "password_required": "密码不能为空",
+        "password_incorrect": "密码不正确",
+        "post_time": "发布时间:",
+        "content_title": "留言内容",
+        "reply_title": "管理员回复时间：",
+        "buttons": {
+            "report": "举报",
+            "like": "点赞"
+        },
+        "user_info": {
+            "info_shiji": "位置",
+            "anonymous": "匿名用户",
+            "homepage_missing": "暂无主页"
+        }
+    }
+}

@@ -1,0 +1,32 @@
+body {
+  font-family: Microsoft Yahei, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.page-header {
+  padding-bottom: 9px;
+  margin: 3px 0 6px;
+  border-bottom: 1px solid #eee;
+  width: 300px;
+}
+.div-header {
+  padding-bottom: 9px;
+  margin: 3px 0 6px;
+  border-bottom: 1px solid #28a4c9;
+}
+hr {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border-color: #28a4c9;
+}
+li {
+  height: 23px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+li a {
+  padding-left: 10px;
+  display: inline-block;
+}
+li span {
+  padding-left: 10px;
+}

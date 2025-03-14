@@ -1,0 +1,182 @@
+{
+  "common": {
+    "title": "SecretNote ゲストブック インストール ウィザード",
+    "brand": "サファイア",
+    "version_info": "バージョン 2.1.0、PHP+MySQL データベースに基づいて、源于",
+    "version_suffix": "の V11-0 バージョン",
+    "reconstruction_description": "PHP8.0 で再構築し、オリジナルのコンセプトと要素を融合して、独自の新しいバージョンを創造的に構築しました",
+    "next": "続ける",
+    "prev": "前のステップに戻る",
+    "error_icon": "⚠️"
+  },
+  "step_titles": {
+    "step": "{current}/5 ステップ",
+    "step1": "インストール許可契約",
+    "step2": "システム環境検証",
+    "step3": "データベース構成",
+    "step4": "管理者設定",
+    "step5": "インストール完了"
+  },
+  "step1": {
+    "license_content": "インストール許可契約内容",
+    "agree_terms": "上記の条項を読み、同意します",
+    "start_installation": "インストールを開始する"
+  },
+  "step2": {
+    "environment_check": "システム環境検証",
+    "back_to_previous": "前のステップに戻る",
+    "continue": "続ける"
+  },
+  "step3": {
+    "database_configuration": "データベース構成",
+    "database_host": "データベースホスト",
+    "database_user": "データベースユーザー",
+    "database_password": "データベースパスワード",
+    "database_name": "データベース名",
+    "table_prefix": "テーブルプレフィックス",
+    "test_connection": "接続をテストして構成を保存する"
+  },
+  "step4": {
+    "admin_settings": "管理者設定",
+    "admin_username": "管理者アカウント",
+    "login_password": "ログインパスワード",
+    "confirm_password": "パスワードを確認する",
+    "password_requirements": "パスワード要件：8 文字以上、大文字と数字を含む",
+    "create_admin_account": "アカウントを作成して続ける"
+  },
+  "step5": {
+    "installation_success": "インストールが成功しました！",
+    "guestbook_ready": "あなたのゲストブックは準備ができています",
+    "security_recommendations": "セキュリティ推奨事項",
+    "delete_install_file": "install.php ファイルをすぐに削除する",
+    "set_config_readonly": "config.php を読み取り専用に設定する (chmod 644)",
+    "configure_web_server": "Web サーバーのアクセス制限を構成することをお勧めします",
+    "visit_homepage": "ホームページを訪問する",
+    "admin_console": "管理コンソール"
+  },
+  "language_switcher": {
+    "select_language": "言語を選択する",
+    "english": "英語",
+    "chinese": "中国語",
+    "japanese": "日本語"
+  },
+  "error_messages": {
+    "installation_failed": "インストールに失敗しました",
+    "must_agree_terms": "インストールを続けるには、許可契約に同意する必要があります",
+    "environment_check_failed": "環境チェックに合格しないため、続けることができません",
+    "unable_to_create_config": "構成ファイルを作成できません",
+    "database_info_required": "データベース情報は空にできません",
+    "database_connection_failed": "データベース接続に失敗しました",
+    "existing_tables_found": "既存のテーブルが検出されたため、プレフィックスやデータベースを変更してください",
+    "admin_info_required": "管理者情報は空にできません",
+    "passwords_do_not_match": "2 回入力したパスワードが一致しません",
+    "password_requirements_not_met": "パスワードは 8 文字以上で、大文字と数字を含む必要があります",
+    "config_write_failed": "構成ファイルの書き込みに失敗しました。ディレクトリの権限を確認してください",
+    "charset_setting_failed": "データベース接続の文字セットを utf8mb4 に設定できません",
+    "database_initialization_failed": "データベースの初期化に失敗しました",
+    "lock_file_write_failed": "インストールロックファイルの書き込みに失敗しました"
+  },
+  "environment_check": {
+    "php_version": "PHP 8.0+",
+    "mysqli_extension": "MySQLi 拡張",
+    "config_file_writable": "構成ファイルが書き込み可能",
+    "gd_library": "GD ライブラリ",
+    "mbstring_extension": "MBString 拡張"
+  },
+  "login_page": {
+    "title": "サファイア ゲストブック - 管理者ログイン",
+    "header": "管理者ログイン",
+    "form": {
+      "username_label": "管理者アカウント",
+      "password_label": "ログインパスワード",
+      "submit_button": "ログイン"
+    },
+    "csrf_token": "セキュリティトークン",
+    "error_messages": {
+      "csrf_token_invalid": "セキュリティトークンが無効です",
+      "empty_credentials": "ユーザー名とパスワードを入力してください",
+      "user_not_found": "ユーザーが存在しません",
+      "password_incorrect": "パスワードが間違っています",
+      "database_error": "データベースエラー",
+      "login_failed": "ログインエラー"
+    },
+    "logging": {
+      "login_attempt": "ログイン試行 - ユーザー名: %s IP: %s",
+      "login_failed_attempt": "ログイン失敗 - ユーザー名: %s IP: %s"
+    }
+  },
+  "security_headers": {
+    "x_frame_options": "X-Frame-Options",
+    "x_xss_protection": "X-XSS-Protection",
+    "x_content_type_options": "X-Content-Type-Options",
+    "content_security_policy": "Content-Security-Policy",
+    "referrer_policy": "Referrer-Policy"
+  },
+  "session": {
+    "cookie_secure": "Cookie Secure",
+    "cookie_httponly": "Cookie HttpOnly",
+    "cookie_samesite": "Cookie SameSite",
+    "session_name": "ADMIN_SESS"
+  },
+  "errors": {
+    "already_installed": "システムはすでにインストールされています！",
+    "remove_lock_hint": "install.lock ファイルを削除してから、再度インストールしてください",
+    "invalid_license_path": "ライセンスパスが無効です",
+    "license_not_readable": "ライセンスファイルが読み取れません",
+    "license_size_limit": "ライセンスファイルのサイズが 100KB の制限を超えています",
+    "license_load_failed": "ライセンスの読み込みに失敗しました",
+    "csrf_token_invalid": "CSRF トークンの検証に失敗しました",
+    "must_agree_terms": "ライセンス契約に同意する必要があります",
+    "environment_check_failed": "環境チェックに合格しませんでした",
+    "unable_to_create_config": "構成ファイルを作成できません",
+    "database_info_required": "データベース情報を完全に記入する必要があります",
+    "database_connection_failed": "データベース接続に失敗しました",
+    "existing_tables_found": "既存のデータテーブルが検出されました",
+    "admin_info_required": "管理者情報を記入する必要があります",
+    "passwords_do_not_match": "2 回入力したパスワードが一致しません",
+    "password_requirements_not_met": "パスワードが強度要件を満たしていません（少なくとも 8 文字、大文字と数字を含む）",
+    "config_write_failed": "構成ファイルの書き込みに失敗しました",
+    "charset_setting_failed": "文字セットの設定に失敗しました",
+    "database_initialization_failed": "データベースの初期化に失敗しました",
+    "lock_file_write_failed": "インストールロックファイルの書き込みに失敗しました"
+  },
+  "database": {
+    "category_id": "カテゴリー ID",
+    "comment_title": "コメントタイトル",
+    "nickname": "ユーザーのニックネーム",
+    "homepage": "ホームページアドレス",
+    "content": "コメント内容",
+    "allow_html": "HTML タグを許可する",
+    "editor_type": "エディタータイプ",
+    "version": "コンテンツバージョン番号",
+    "reply": "管理者の返信",
+    "is_top": "トップ優先度",
+    "review_status": "レビュー状態",
+    "comment_type": "コメントタイプ",
+    "encryption_mode": "暗号化モード",
+    "access_password": "アクセスパスワード",
+    "ip_address": "IP アドレス",
+    "ip_location": "IP ジオロケーション",
+    "browser_fingerprint": "ブラウザーフィンガープリント",
+    "creation_time": "作成時間",
+    "reply_time": "返信時間",
+    "view_time": "最終閲覧時間",
+    "media_type": "メディアタイプ",
+    "local_image": "ローカル画像パス",
+    "external_video": "外部ビデオアドレス",
+    "video_thumbnail": "ビデオサムネイル",
+    "file_size": "ファイルサイズ（バイト）"
+  },
+  "categories": {
+    "whisper_zone": "ささやき존",
+    "user_feedback": "ユーザーのフィードバック",
+    "technical_discussion": "技術的な議論",
+    "product_suggestions": "製品の提案"
+  },
+  "demo": {
+    "title": "システムデモ",
+    "content": "🎉 新しいゲストブックシステムをお試しください！\n\n主要なアップデートと機能のハイライト:\n🌟 ビデオ埋め込み機能\n現在、コメントに外部ビデオリンクを埋め込むことができます。これにより、コメントがより面白くなります。'外部ビデオアドレス'フィールドにビデオ URL を入力するだけで、ビデオサムネイルが自動的に生成され、表示されます。\n\n🔄 マルチレベルリプライシステム\nコメントシステムはマルチレベルリプライをサポートしています。他のユーザーのコメントに対してネストされたリプライを行うことができます。リプライの階層関係はシステムによって自動的に管理され、会話がより深く、整理されたものになります。\n\n🔒 セキュリティ強化\nコメントシステムのセキュリティを全面的にアップグレードしました。アクセスパスワード保護（ささやき機能）を追加するなど、コメントデータがより安全で信頼できるようにしました。\n\n🌐 パーソナルホームページリンク\nコメントシステムはユーザーのパーソナルホームページリンクを表示する機能をサポートしています。'http'で始まるURLを入力するだけで、コメントにクリック可能なパーソナルホームページリンクが表示されます。\n\n🤫 ささやき機能\n暗号化されたコメント（ささやき）を投稿できます。暗号化モードを選択し、アクセスパスワードを設定するだけで、プライベートなコメントを他人から閲覧されないように保護できます。注意：デフォルトのパスワードは例示のみです。必ず自分でパスワードを設定してください。\n\n✅ 新しい報告機能\nコメントの内容が適切でないと考える場合は、右下の報告機能を使用できます。コンテンツが表示から削除されます。\n\n🎨 マルチメディアサポート\nコメントシステムはローカル画像のアップロードと外部ビデオの埋め込みをサポートしています。コメントで豊富なマルチメディアコンテンツを表示でき、コメントがより魅力的になります。ヒント：右側の画像表示エリアを確認して、マルチメディアコメントの魅力を体験してください。\n\n📝 デモコメント操作ガイド\n    コメントに返信：このメッセージに返信を試して、マルチレベルリプライシステムの便利さを体験してください。\n    レビュー状態を確認：コメントリストのレビュー状態マークに注意を払って、コメントが承認されているかどうかを確認してください。\n    画像/ビデオをアップロード：コメントする際に、ローカル画像をアップロードまたは外部ビデオを埋め込むを選択して、コメントの内容を豊かにしてください。\n    ささやきを設定：匿名でプライベートなコメントを投稿する必要がある場合は、暗号化モードを選択し、アクセスパスワードを設定してください。\n\n🌟 重要なポイント\nあなたが投稿するコメントは審査を必要とせず、投稿が成功するとすぐにホームページに掲載されます。ページを更新して確認できます。私たちは禁止語や意味のないコメントのフィルタリング機能を有効にしているため、安心してコメントしてください。\n\n📢 お知らせ\n問題や提案がございましたら、いつでも提案欄に匿名でコメントしてください。\n\n新しいゲストブックシステムで素晴らしい思い出を残していただければ幸いです！",
+    "default_nickname": "SecretNote ゲストブック",
+    "default_location": "中国 - 上海"
+  }
+}
