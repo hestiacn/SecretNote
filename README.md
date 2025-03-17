@@ -1,8 +1,8 @@
 # SecretNote: Your Private Space to Express
 
-## [简体中文](README-zhCN)
+## [简体中文](README-zhCN.md)
 
-## [日本語](README-ja_JP)
+## [日本語](README-ja_JP.md)
 
 In today's digital age, everyone deserves a safe haven for self-expression without fear of judgment. SecretNote is exactly that—a meticulously designed platform where users can anonymously share their thoughts, feelings, and ideas in a secure environment.
 
