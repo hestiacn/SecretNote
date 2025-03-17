@@ -97,18 +97,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $thetitle = sanitizeInput($_POST['thetitle'] ?? '');
         $nicheng = sanitizeInput($_POST['nicheng'] ?? '');
         $homepage = '';
-	    if (!empty($_POST['homepage'])) {
-	        $homepage = filter_var($_POST['homepage'], FILTER_SANITIZE_URL);
-	        // 进一步验证URL格式
-	        if (!filter_var($homepage, FILTER_VALIDATE_URL)) {
-	            $error = '请输入有效的主页URL地址';
-	        }
-	    }
+        if (!empty($_POST['homepage'])) {
+            $homepage = filter_var($_POST['homepage'], FILTER_SANITIZE_URL);
+            if (!filter_var($homepage, FILTER_VALIDATE_URL)) {
+                $error = '请输入有效的主页URL地址';
+            }
+        }
         $image = sanitizeInput($_POST['avatar'] ?? 'touxiang/default3/1.gif');
-        // 调整处理顺序
-	   $rawContent = $_POST['content'] ?? '';
-	   $decodedContent = html_entity_decode($rawContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-	   $content = sanitizeHTML($decodedContent);
+        $rawContent = $_POST['content'] ?? '';
+        $decodedContent = html_entity_decode($rawContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $content = sanitizeHTML($decodedContent);
         $qiaoqiao = isset($_POST['qiaoqiao']) ? 1 : 0;
         $qiaoqiaopass = $_POST['qiaoqiaopass'] ?? '';
 
@@ -120,194 +118,188 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
         }
-		// ip
-		$ip = filter_var($_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP) ?: '';
-		$location = '未知地区';
-		if ($ip) {
-		    require_once __DIR__.'/include/ip.php';
-		    $location = getIPLocation($ip);
-		}
-		// ==================== 违禁词检测模块 - 修正版 ====================
-		define('BANNED_WORDS_FILE', __DIR__.'/words.b64');
-		define('CACHE_DIR', __DIR__.'/cache');
-		define('REGEX_CACHE', CACHE_DIR.'/regex_cache.dat');
-		
-		// 创建缓存目录
-		if (!file_exists(CACHE_DIR)) {
-		    mkdir(CACHE_DIR, 0755, true);
-		}
-		
-		// 加载违禁词库（支持base64编码）
-		function loadBannedWords() {
-		    if (!file_exists(BANNED_WORDS_FILE)) return [];
-		    
-		    $content = base64_decode(file_get_contents(BANNED_WORDS_FILE));
-			return array_filter(
-			    explode("\n", $content),
-			    function($word) {
-			        $word = trim($word);
-			        return !empty($word) && 
-			               $word[0] !== '#' &&
-			               mb_check_encoding($word, 'UTF-8');
-			    }
-			);
-		}
-		
-		// 智能正则生成器（中文优化版）
-		function buildSmartRegex($words) {
-		    $chunks = array_chunk($words, 50);
-		    $patterns = [];
-		
-		    foreach ($chunks as $chunk) {
-			$escaped = array_map(function($word) {
-			    // 新增编码检测和空值过滤
-			    $word = trim($word);
-			    if (empty($word)) return null;
-			    
-			    $detectedEncoding = mb_detect_encoding($word, ['UTF-8','GBK','GB2312','BIG5','ASCII'], true);
-			    $sourceEncoding = $detectedEncoding ?: 'UTF-8';
-			    $word = mb_convert_encoding($word, 'UTF-8', $sourceEncoding);
-			    $cleanWord = preg_replace('/\p{C}+/u', '', $word) ?? '';
-			    
-			    return $cleanWord !== '' ? $cleanWord : null;
-			}, $chunk);
-			
-			// 新增数组过滤
-			$escaped = array_filter($escaped);
-		
-		        if (!empty($escaped)) {
-				    $patterns[] = '/'.implode('|', $escaped).'/iu';
-				}
-		    }
-		
-		    return $patterns;
-		}
-		
-		// 带调试的违禁词检测
-		function detectBannedWords($text, $patterns) {
-		    // 预处理文本（保留中文、字母、数字）
-		    $cleanText = preg_replace('/[^\p{Han}a-zA-Z0-9]/u', '', $text);
-		    
-		    foreach ($patterns as $pattern) {
-		        if (preg_match($pattern, $cleanText, $matches)) {
-		            error_log("[违禁词告警] 匹配规则: $pattern");
-		            error_log("[违禁词告警] 命中内容: ".$matches[0]);
-		            return true;
-		        }
-		        }}
-			// 主执行流程
-			$bannedWords = loadBannedWords();
-			if (file_exists(REGEX_CACHE) && (time()-filemtime(REGEX_CACHE)) < 3600) {
-			    $patterns = unserialize(file_get_contents(REGEX_CACHE));
-			} else {
-			    $patterns = buildSmartRegex($bannedWords);
-			    file_put_contents(REGEX_CACHE, serialize($patterns));
-			    error_log("[系统通知] 已重建违禁词正则缓存，共".count($patterns)."组模式");
-			}
-			
-			// 执行检测
-			if (!$error && !empty($patterns)) {
-			    $checkText = $thetitle . ' ' . $content;
-				$detectResult = detectBannedWords($checkText, $patterns);
-				if ($detectResult && $detectResult['found']) {
-				    $error = '内容包含敏感信息，请调整后重新提交';
-			        
-			        // 调试模式日志
-			        if (defined('DEBUG_MODE')) {
-			            error_log("[调试信息] 触发文本: ".substr($checkText, 0, 200));
-			            error_log("[调试信息] 预处理后: ".substr($detectResult['cleanText'], 0, 200));
-			        }
-			    }
-			}
-			// 在相似度检测代码块前添加以下内容
-			// 步骤1：提取B站视频特征
-			$bvid = null;
-			if (preg_match('/bvid=([A-Za-z0-9]+)/i', $content, $matches)) {
-			    $bvid = $matches[1];
-			}
-			
-			// 步骤2：特殊处理包含视频的内容
-			if ($bvid) {
-			    // 2.1 检查24小时内是否已有相同视频
-			    $stmt = $mysqli->prepare("SELECT COUNT(*) FROM {$tablePrefix}book 
-			                             WHERE content LIKE CONCAT('%', ?, '%')
-			                             AND time > NOW() - INTERVAL 24 HOUR");
-			    $stmt->bind_param('s', $bvid);
-			    $stmt->execute();
-			    
-			    if ($stmt->get_result()->fetch_row()[0] > 0) {
-			        $error = "相同视频已在24小时内分享过，请添加更多原创描述";
-			    }
-			
-			    // 2.2 预处理时保留视频标识但移除结构代码
-			    $contentForCompare = preg_replace('/<iframe[^>]*bvid='.$bvid.'[^>]*>[^<]*<\/iframe>/i', 
-			                                    '[视频ID:'.$bvid.']', 
-			                                    $content);
-			} else {
-			    $contentForCompare = $content;
-			}
-			
-			// 步骤3：修改预处理逻辑（原代码修改处）
-			$inputContent = preg_replace('/[^\p{Han}a-zA-Z0-9\/:%?&=._#-]/u', '', $contentForCompare);
-			$inputContent = mb_strtolower($inputContent);
-		// ==================== 危险模式检测 ====================
-		$dangerousPatterns = [
-		    '/<\s*script\b[^>]*>.*?<\/script>/is' => 'JavaScript脚本',
-		    '/\bon\w+\s*=\s*["\'].*?["\']/i' => '事件处理器',
-		    '/\b(union\s+select|select\b.*?\bfrom|insert\s+into|delete\s+from)\b/is' => 'SQL注入',
-		    '/\b(eval|alert|prompt|confirm)\s*\(/i' => '危险函数'
-		];
-		
-		foreach ($dangerousPatterns as $pattern => $type) {
-		    if (preg_match($pattern, $content)) {
-		        $error = "禁止包含{$type}信息";
-		        break;
-		    }
-		}
-		if (!$error) {
-		    $similarThreshold = 75; 
-		    $checkHours = 24;       
-		    $stmt = $mysqli->prepare("SELECT content FROM {$tablePrefix}book 
-		                            WHERE time > NOW() - INTERVAL ? HOUR
-		                            ORDER BY id DESC LIMIT 100");
-		    $stmt->bind_param('i', $checkHours);
-		    $stmt->execute();
-		    $result = $stmt->get_result();
-		    
-		    // 预处理输入内容
-		    $inputContent = preg_replace('/[^\p{Han}a-z0-9]/u', '', $content);
-		    $inputLength = mb_strlen($inputContent);
-		    
-		    while ($row = $result->fetch_assoc()) {
-		        // 预处理数据库内容
-		        $dbContent = preg_replace('/[^\p{Han}a-z0-9]/u', '', $row['content']);
-		        $dbLength = mb_strlen($dbContent);
-		        
-		        // 长度差异过滤
-		        if ($inputLength > 0 && abs($inputLength - $dbLength)/$inputLength > 0.3) {
-		            continue;
-		        }
-		        
-		        // 计算相似度
-		        similar_text($inputContent, $dbContent, $percent);
-		        if ($percent >= $similarThreshold) {
-		            $error = "内容相似度过高（相似度".round($percent,1)."%），请修改后重试";
-		            break;
-		        }
-		    }
-		}
-        if (!$error) {
-            $stmt = $mysqli->prepare("SELECT COUNT(*) FROM {$tablePrefix}book WHERE ip = ? AND time > NOW() - INTERVAL 1 HOUR");
-            $stmt->bind_param('s', $ip);
-            $stmt->execute();
-            $count = $stmt->get_result()->fetch_row()[0];
-            if ($count >= 5) {
-                $error = '提交过于频繁，请1小时后再试';
-                file_put_contents(__DIR__.'/logs/security.log', 
-                    "[".date('Y-m-d H:i:s')."] 频率限制 IP:{$ip}\n", FILE_APPEND);
-            }
+
+        // IP 和位置信息
+        $ip = filter_var($_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP) ?: '';
+        $location = '未知地区';
+        if ($ip) {
+            require_once __DIR__ . '/include/ip.php';
+            $location = getIPLocation($ip);
+        }
+
+        // 违禁词检测模块
+        define('BANNED_WORDS_FILE', __DIR__.'/words.b64');
+        define('CACHE_DIR', __DIR__.'/cache');
+        define('REGEX_CACHE', CACHE_DIR.'/regex_cache.dat');
+        
+        // 创建缓存目录
+        if (!file_exists(CACHE_DIR)) {
+            mkdir(CACHE_DIR, 0755, true);
         }
         
+        // 加载违禁词库（支持base64编码）
+        function loadBannedWords() {
+            if (!file_exists(BANNED_WORDS_FILE)) return [];
+            
+            $content = base64_decode(file_get_contents(BANNED_WORDS_FILE));
+            return array_filter(
+                explode("\n", $content),
+                function($word) {
+                    $word = trim($word);
+                    return !empty($word) && 
+                           $word[0] !== '#' &&
+                           mb_check_encoding($word, 'UTF-8');
+                }
+            );
+        }
+        
+        // 智能正则生成器（中文优化版）
+        function buildSmartRegex($words) {
+            $chunks = array_chunk($words, 50);
+            $patterns = [];
+        
+            foreach ($chunks as $chunk) {
+                $escaped = array_map(function($word) {
+                    $word = trim($word);
+                    if (empty($word)) return null;
+                    
+                    $detectedEncoding = mb_detect_encoding($word, ['UTF-8','GBK','GB2312','BIG5','ASCII'], true);
+                    $sourceEncoding = $detectedEncoding ?: 'UTF-8';
+                    $word = mb_convert_encoding($word, 'UTF-8', $sourceEncoding);
+                    $cleanWord = preg_replace('/\p{C}+/u', '', $word) ?? '';
+                    
+                    return $cleanWord !== '' ? $cleanWord : null;
+                }, $chunk);
+                
+                $escaped = array_filter($escaped);
+        
+                if (!empty($escaped)) {
+                    $patterns[] = '/'.implode('|', $escaped).'/iu';
+                }
+            }
+        
+            return $patterns;
+        }
+        
+        // 带调试的违禁词检测
+        function detectBannedWords($text, $patterns) {
+            $cleanText = preg_replace('/[^\p{Han}a-zA-Z0-9]/u', '', $text);
+            
+            foreach ($patterns as $pattern) {
+                if (preg_match($pattern, $cleanText, $matches)) {
+                    error_log("[违禁词告警] 匹配规则: $pattern");
+                    error_log("[违禁词告警] 命中内容: ".$matches[0]);
+                    return true;
+                }
+            }
+            return false;
+        }
+        // 主执行流程
+        $bannedWords = loadBannedWords();
+        if (file_exists(REGEX_CACHE) && (time()-filemtime(REGEX_CACHE)) < 3600) {
+            $patterns = unserialize(file_get_contents(REGEX_CACHE));
+        } else {
+            $patterns = buildSmartRegex($bannedWords);
+            file_put_contents(REGEX_CACHE, serialize($patterns));
+            error_log("[系统通知] 已重建违禁词正则缓存，共".count($patterns)."组模式");
+        }
+        
+        // 执行检测
+        if (!$error && !empty($patterns)) {
+            $checkText = $thetitle . ' ' . $content;
+            if (detectBannedWords($checkText, $patterns)) {
+                $error = '内容包含敏感信息，请调整后重新提交';
+            }
+        }
+        // 在相似度检测代码块前添加以下内容
+        // 步骤1：提取B站视频特征
+        $bvid = null;
+        if (preg_match('/bvid=([A-Za-z0-9]+)/i', $content, $matches)) {
+            $bvid = $matches[1];
+        }
+        
+        // 步骤2：特殊处理包含视频的内容
+        if ($bvid) {
+            // 2.1 检查24小时内是否已有相同视频
+            $stmt = $mysqli->prepare("SELECT COUNT(*) FROM {$tablePrefix}book 
+                                     WHERE content LIKE CONCAT('%', ?, '%')
+                                     AND time > NOW() - INTERVAL 24 HOUR");
+            $stmt->bind_param('s', $bvid);
+            $stmt->execute();
+            
+            if ($stmt->get_result()->fetch_row()[0] > 0) {
+                $error = "相同视频已在24小时内分享过，请添加更多原创描述";
+            }
+        
+            // 2.2 预处理时保留视频标识但移除结构代码
+            $contentForCompare = preg_replace('/<iframe[^>]*bvid='.$bvid.'[^>]*>[^<]*<\/iframe>/i', 
+                                            '[视频ID:'.$bvid.']', 
+                                            $content);
+        } else {
+            $contentForCompare = $content;
+        }
+        
+        // 步骤3：修改预处理逻辑（原代码修改处）
+        $inputContent = preg_replace('/[^\p{Han}a-zA-Z0-9\/:%?&=._#-]/u', '', $contentForCompare);
+        $inputContent = mb_strtolower($inputContent);
+    // ==================== 危险模式检测 ====================
+    $dangerousPatterns = [
+        '/<\s*script\b[^>]*>.*?<\/script>/is' => 'JavaScript脚本',
+        '/\bon\w+\s*=\s*["\'].*?["\']/i' => '事件处理器',
+        '/\b(union\s+select|select\b.*?\bfrom|insert\s+into|delete\s+from)\b/is' => 'SQL注入',
+        '/\b(eval|alert|prompt|confirm)\s*\(/i' => '危险函数'
+    ];
+    
+    foreach ($dangerousPatterns as $pattern => $type) {
+        if (preg_match($pattern, $content)) {
+            $error = "禁止包含{$type}信息";
+            break;
+        }
+    }
+    if (!$error) {
+        $similarThreshold = 75; 
+        $checkHours = 24;       
+        $stmt = $mysqli->prepare("SELECT content FROM {$tablePrefix}book 
+                                WHERE time > NOW() - INTERVAL ? HOUR
+                                ORDER BY id DESC LIMIT 100");
+        $stmt->bind_param('i', $checkHours);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        // 预处理输入内容
+        $inputContent = preg_replace('/[^\p{Han}a-z0-9]/u', '', $content);
+        $inputLength = mb_strlen($inputContent);
+        
+        while ($row = $result->fetch_assoc()) {
+            // 预处理数据库内容
+            $dbContent = preg_replace('/[^\p{Han}a-z0-9]/u', '', $row['content']);
+            $dbLength = mb_strlen($dbContent);
+            
+            // 长度差异过滤
+            if ($inputLength > 0 && abs($inputLength - $dbLength)/$inputLength > 0.3) {
+                continue;
+            }
+            
+            // 计算相似度
+            similar_text($inputContent, $dbContent, $percent);
+            if ($percent >= $similarThreshold) {
+                $error = "内容相似度过高（相似度".round($percent,1)."%），请修改后重试";
+                break;
+            }
+        }
+    }
+    if (!$error) {
+        $stmt = $mysqli->prepare("SELECT COUNT(*) FROM {$tablePrefix}book WHERE ip = ? AND time > NOW() - INTERVAL 1 HOUR");
+        $stmt->bind_param('s', $ip);
+        $stmt->execute();
+        $count = $stmt->get_result()->fetch_row()[0];
+        if ($count >= 5) {
+            $error = '提交过于频繁，请1小时后再试';
+            file_put_contents(__DIR__.'/logs/security.log', 
+                "[".date('Y-m-d H:i:s')."] 频率限制 IP:{$ip}\n", FILE_APPEND);
+        }
+    }
+    
 
         // 验证码验证
         if (!$error) {
@@ -320,30 +312,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-		// 悄悄话密码验证
-		if (!$error && $qiaoqiao && empty($qiaoqiaopass)) {
-		  $error = '开启悄悄话必须设置密码';
-		}
-		// 修改原有密码处理部分
-		if ($qiaoqiao) {
-		    $qiaoqiaopass = trim($_POST['qiaoqiaopass'] ?? '');
-		    
-		    if (mb_strlen($qiaoqiaopass) < 4 || mb_strlen($qiaoqiaopass) > 16) {
-		        $error = '密码长度需为4-16位';
-		    }
-		    
-		    if (preg_match('/\s/', $qiaoqiaopass)) {
-		        $error = '密码不能包含空格';
-		    }
-		    
-		    // 密码复杂度要求
-		    if (!preg_match('/^(?=.*\d)(?=.*[a-zA-Z]).+$/', $qiaoqiaopass)) {
-		        $error = '密码需包含字母和数字';
-		    }
-		}
+        // 悄悄话密码验证
+        if (!$error && $qiaoqiao && empty($qiaoqiaopass)) {
+            $error = '开启悄悄话必须设置密码';
+        }
+
+        // 修改原有密码处理部分
+        if ($qiaoqiao) {
+            $qiaoqiaopass = trim($_POST['qiaoqiaopass'] ?? '');
+
+            if (mb_strlen($qiaoqiaopass) < 4 || mb_strlen($qiaoqiaopass) > 16) {
+                $error = '密码长度需为4-16位';
+            }
+
+            if (preg_match('/\s/', $qiaoqiaopass)) {
+                $error = '密码不能包含空格';
+            }
+
+            // 密码复杂度要求
+            if (!preg_match('/^(?=.*\d)(?=.*[a-zA-Z]).+$/', $qiaoqiaopass)) {
+                $error = '密码需包含字母和数字';
+            }
+        }
+
         // 数据库操作
         if (!$error) {
-            $qiaoqiaopass = $qiaoqiao ? password_hash($qiaoqiaopass, PASSWORD_DEFAULT) : '';
+            // 对密码进行哈希处理
+            $hashedPassword = $qiaoqiao ? password_hash($qiaoqiaopass, PASSWORD_DEFAULT) : '';
             
             $stmt = $mysqli->prepare("INSERT INTO {$tablePrefix}book 
                 (thetitle, nicheng, content, shenhe, ip, ipshiji, local_image, qiaoqiao, qiaoqiaopass, homepage) 
@@ -355,9 +350,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $content,
                 $ip,
                 $location,
-                $local_image,
+                $image,
                 $qiaoqiao,
-                $qiaoqiaopass,
+                $hashedPassword,
                 $homepage
             );
 
@@ -369,7 +364,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -378,6 +372,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>蓝宝石留言本 - 发布匿名留言</title>
+    <link rel="icon" href="../assets/image/favicon.ico" type="image/ico">
     <link href="../assets/bootstrap-5.3.3/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/bootstrap-icons-1.11.3/font/bootstrap-icons.min.css">
 <style>
@@ -777,22 +772,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <!-- 悄悄话设置 -->
-                <div class="mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" 
-                               type="checkbox" 
-                               name="qiaoqiao" 
-                               id="qiaoqiao">
-                        <label class="form-check-label" for="qiaoqiao">启用悄悄话</label>
-                    </div>
-                    <input type="password" 
-                           class="form-control mt-2" 
-                           name="qiaoqiaopass" 
-                           id="qiaoqiaopass" 
-                           placeholder="设置查看密码"
-                           disabled
-                           required>
-                </div>
+			<div class="mb-3">
+			    <div class="form-check">
+			        <input class="form-check-input" 
+			               type="checkbox" 
+			               name="qiaoqiao" 
+			               id="qiaoqiao">
+			        <label class="form-check-label d-flex align-items-center" for="qiaoqiao">
+			            <!-- 主标签 -->
+			            <span>启用悄悄话</span>
+			            
+			            <!-- 新增说明区块 -->
+			            <small class="text-muted ms-2 d-flex align-items-center">
+			                <i class="bi bi-info-circle me-1" style="font-size:0.9em"></i>
+			                <em>如果您需要加密内容，建议将标题更改为易记文本，以便后续你可以查看</em>
+			            </small>
+			        </label>
+			    </div>
+			    <input type="password" 
+			           class="form-control mt-2" 
+			           name="qiaoqiaopass" 
+			           id="qiaoqiaopass" 
+			           placeholder="设置查看密码"
+			           disabled
+			           required>
+			</div>
 
                 <!-- 验证码 -->
 			<div class="mb-3 row align-items-center">
@@ -813,7 +817,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				</div>
 			</div>
 
-                <button type="submit" class="btn btn-primary w-100 py-2">
+                <button type="submit" class="btn btn-primary py-2">
                     <i class="bi bi-send-check me-2"></i>提交留言
                 </button>
             </form>
@@ -833,9 +837,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <li class="nav-item">
             <a class="nav-link active" href="#uploadTab" data-bs-toggle="tab">上传图片</a>
           </li>
-          <li class="nav-item">
+          <!--<li class="nav-item">
             <a class="nav-link" href="#urlTab" data-bs-toggle="tab">网络图片</a>
-          </li>
+          </li>-->
         </ul>
 
         <!-- 选项卡内容 -->
@@ -1345,12 +1349,13 @@ function insertVideo() {
             else if (videoUrl.hostname.includes('bilibili.com')) {
                 const bvid = url.match(/(BV[\w]{10})/)?.[0];
                 if (bvid) {
-                    iframeText = `<iframe src="https://player.bilibili.com/player.html?bvid=${bvid}&page=1" 
+	              iframeText = `<iframe src="https://player.bilibili.com/player.html?bvid=${bvid}&page=1" 
                         frameborder="0" 
                         scrolling="no"
+                        allowfullscreen
                         class="bilibili-iframe"></iframe>`;
-                }
-            }
+			    }
+			}
             // 腾讯视频
             else if (videoUrl.hostname.includes('v.qq.com')) {
                 const videoId = videoUrl.pathname.split('/').pop();

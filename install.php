@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
-
+// 基础设置
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', '0');
+// 安全头设置（必须最先执行）
 
-// 设置安全头
 header(
     "Content-Security-Policy: " .
     "default-src 'self'; " .
@@ -21,64 +21,51 @@ header(
     "upgrade-insecure-requests;" .
     "report-uri /csp-report;"
 );
-
 header("X-Frame-Options: DENY");
 header("X-Content-Type-Options: nosniff");
 header("Referrer-Policy: strict-origin-when-cross-origin");
+// 会话管理（优先处理）
 
-define('LICENSE_FILE', __DIR__ . '/license.php');
-// 正确的初始化顺序
-require_once __DIR__.'/include/i18n.php'; // 优先加载翻译类
+if (session_status() === PHP_SESSION_NONE) {
+    session_start([
+        'cookie_secure' => isset($_SERVER['HTTPS']),
+        'cookie_httponly' => true,
+        'cookie_samesite' => 'Lax', 
+        'read_and_close' => false
+    ]);
+}
 
-// 获取当前语言设置
-$LANG = $_SESSION['LANG'] ?? 'zh_CN'; // 默认为中文
+// 加载翻译引擎
+require_once __DIR__.'/include/i18n.php';
 
-// 如果用户提交了语言选择表单
+// 处理语言选择参数
 if (isset($_GET['lang'])) {
     $lang = in_array($_GET['lang'], ['zh_CN', 'en_US', 'ja_JP']) ? $_GET['lang'] : 'zh_CN';
     $_SESSION['LANG'] = $lang;
     $LANG = $lang;
 }
+// 初始化默认语言
+$LANG = $_SESSION['LANG'] ?? 'en_US';
 
-// 加载对应语言的翻译文件
-$translations = require __DIR__ . '/include/translations.php';
-if (!isset($translations[$LANG])) {
-    throw new RuntimeException("不支持的语言: {$LANG}");
-}
-$currentLangData = $translations[$LANG];
-
-// 初始化多语言
 define('LOCK_FILE', __DIR__.'/install.lock');
 define('CONFIG_FILE', __DIR__.'/include/config.php');
 
-// 带翻译的安装检测
+// 安装锁定检测
 if (file_exists(LOCK_FILE)) {
-    die(sprintf('
-        <div style="text-align: center; color: red;">
-            <h1>%s</h1>
-            <p>%s</p>
-        </div>',
+    die(sprintf(
+        '<div style="text-align: center; color: red;"><h1>%s</h1><p>%s</p></div>',
         htmlspecialchars(__('errors.already_installed'), ENT_QUOTES),
         htmlspecialchars(__('errors.remove_lock_hint'), ENT_QUOTES)
     ));
 }
+// 安装步骤控制
 
-// 会话管理
-if (session_status() === PHP_SESSION_NONE) {
-    session_start([
-        'cookie_secure' => isset($_SERVER['HTTPS']),
-        'cookie_httponly' => true,
-        'cookie_samesite' => 'Strict'
-    ]);
-}
-
-// 安装步骤处理
 $step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
 $step = max(1, min(5, $step));
+// 安全功能定义
 
-// 安全函数
 function sanitizeInput(string $input): string {
-    return htmlspecialchars(strip_tags(trim($input)), ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(strip_tags(trim($input)), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
 function generateCSRFToken(): string {
@@ -92,7 +79,6 @@ function validateCSRFToken(string $token): bool {
     return hash_equals($_SESSION['csrf_token'] ?? '', $token);
 }
 
-// 安装日志
 function logInstall(string $message): void {
     $log = sprintf("[%s] %s - %s\n", 
         date('Y-m-d H:i:s'),
@@ -101,8 +87,8 @@ function logInstall(string $message): void {
     );
     file_put_contents(__DIR__.'/install.log', $log, FILE_APPEND);
 }
+// 步骤前置验证
 
-// 步骤验证前置检查
 for ($i = 1; $i < $step; $i++) {
     if (!isset($_SESSION["step{$i}"])) {
         header("Location: ?step={$i}");
@@ -110,23 +96,44 @@ for ($i = 1; $i < $step; $i++) {
     }
 }
 
+// 多语言相关设置
+$htmlLang = match ($LANG) {
+    'zh_CN' => 'zh-CN',
+    'en_US' => 'en',
+    'ja_JP' => 'ja',
+    default => 'en'
+};
+// 许可证文件处理
+$licenseFile = match ($LANG) {
+    'zh_CN' => 'cnlicense.php',
+    'en_US' => 'uslicense.php',
+    'ja_JP' => 'jplicense.php',
+};
+define('LICENSE_FILE', __DIR__ . '/' . $licenseFile);
+
 try {
-    // 许可证文件处理
+    // 验证许可证文件路径
     $licensePath = realpath(LICENSE_FILE);
     if ($licensePath === false || dirname($licensePath) !== __DIR__) {
         throw new RuntimeException(__('errors.invalid_license_path'));
     }
-    if (!file_exists($licensePath) || !is_readable($licensePath)) {
+    
+    // 文件可读性检查
+    if (!is_readable($licensePath)) {
         throw new RuntimeException(__('errors.license_not_readable'));
     }
+    
+    // 文件大小限制
     if (filesize($licensePath) > 1024 * 100) {
         throw new RuntimeException(__('errors.license_size_limit'));
     }
+    
     $licenseContent = file_get_contents($licensePath);
 } catch (Exception $e) {
     $licenseContent = __('errors.license_load_failed') . ': ' . $e->getMessage();
 }
 
+// CSRF令牌生成
 $error = null;
 $csrfToken = generateCSRFToken();
 
@@ -532,10 +539,11 @@ PHP;
 
     // 生成CSRF令牌
     $csrfToken = generateCSRFToken();
+    
 ?>
 
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="<?= $htmlLang ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -548,7 +556,7 @@ PHP;
     <link href="/assets/bootstrap-icons-1.11.3/font/bootstrap-icons.min.css" 
           rel="stylesheet"
           nonce="<?= $cspNonce ?>"
-          integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+r">
+          integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+">
 <style>
 .install-wrapper {
   min-height: 100vh;
@@ -734,11 +742,11 @@ PHP;
     <form method="get">
         <!-- 添加提示文本 -->
         <span class="ms-2"><?= __('language_switcher.select_language') ?></span>
-        <select name="lang" class="form-select form-select-sm" onchange="this.form.submit()">
-            <?php foreach (['en_US' => 'English', 'zh_CN' => '中文', 'ja_JP' => '日本語'] as $code => $name): ?>
-                <option value="<?= $code ?>" <?= $code === InstallI18n::getCurrentLang() ? 'selected' : '' ?>>
-                    <?= $name ?>
-                </option>
+		<select name="lang" class="form-select form-select-sm">
+		    <?php foreach (['en_US' => 'English', 'zh_CN' => '中文', 'ja_JP' => '日本語'] as $code => $name): ?>
+		        <option value="<?= $code ?>" <?= $code === $LANG ? 'selected' : '' ?>>
+		            <?= $name ?>
+		        </option>
             <?php endforeach; ?>
         </select>
         <input type="hidden" name="step" value="<?= $step ?>">
@@ -748,9 +756,9 @@ PHP;
         <div class="install-header">
             <div class="d-flex flex-column align-items-center">
 			<div style="width: 500px; margin: 0 auto; text-align: center;">
-			    <a href="/assets/image/logo.webp" target="_blank" rel="noopener noreferrer">
-			        <img src="/assets/image/logo.webp" alt="Icon" style="max-width: 50%; height: auto;">
-			    </a>
+			    <img src="/assets/image/logo.webp" 
+			         alt="Icon" 
+			         style="max-width: 50%; height: auto; pointer-events: none;">
 			</div>
                 <h1 class="display-5 fw-bold mb-3"><?= __('common.title') ?></h1>
             </div>
@@ -936,12 +944,14 @@ PHP;
     </div>
    
 <script>
-    document.querySelector('select[name="lang"]').addEventListener('change', function() {
+document.querySelector('select[name="lang"]').addEventListener('change', function() {
+  const form = this.closest('form');
+  if (!form) return;
   const overlay = document.createElement('div');
   overlay.className = 'loading-overlay';
   overlay.innerHTML = '<div class="spinner-border text-primary"></div>';
   document.body.appendChild(overlay);
-  this.form.submit();
+  form.submit();
 });
 
 document.body.addEventListener('click', function(event) {

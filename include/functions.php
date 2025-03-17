@@ -1,6 +1,52 @@
 <?php
+
 declare(strict_types=1);
 require_once __DIR__ . '/../assets/htmlpurifier/library/HTMLPurifier.auto.php';
+/**
+ * 生成CSRF令牌
+ */
+function generateCSRFToken(): string {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * 验证CSRF令牌
+ */
+function validateCSRFToken(string $token): bool {
+    if (empty($_SESSION['csrf_token'])) {
+        return false;
+    }
+    return hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
+ * 初始化CSRF令牌（在页面顶部调用）
+ */
+function initCSRFToken() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start([
+            'cookie_lifetime' => 86400,
+            'cookie_secure' => true,
+            'cookie_httponly' => true,
+            'cookie_samesite' => 'Strict',
+            'use_strict_mode' => true
+        ]);
+        // 仅当不存在或过期时生成新令牌
+        if (!isset($_SESSION['csrf_token']) || ($_SESSION['csrf_token_expire'] ?? 0) < time()) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            $_SESSION['csrf_token_expire'] = time() + 3600; // 1小时有效期
+        }
+        session_regenerate_id(true);
+    }
+    // 确保会话中已有令牌
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['csrf_token_expire'] = time() + 3600;
+    }
+}
 // HTMLPurifier配置
 
 function sanitizeHTML($input) {

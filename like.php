@@ -33,10 +33,14 @@ try {
         throw new InvalidArgumentException('无效的消息ID');
     }
     
+    // 获取用户代理和会话ID
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $sessionId = session_id();
+    
     // 检查是否已点赞
-    $checkStmt = $mysqli->prepare("SELECT id FROM {$tablePrefix}like_records 
-                                  WHERE message_id = ? AND ip_address = ?");
-    $checkStmt->bind_param('is', $messageId, $ip);
+    $checkStmt = $mysqli->prepare("SELECT id FROM {$_SESSION['db']['prefix']}like 
+                                  WHERE message_id = ? AND ip = ? AND user_agent = ? AND session_id = ?");
+    $checkStmt->bind_param('isss', $messageId, $ip, $userAgent, $sessionId);
     $checkStmt->execute();
     
     if ($checkStmt->get_result()->num_rows > 0) {
@@ -47,21 +51,21 @@ try {
     $mysqli->begin_transaction();
     try {
         // 更新点赞数（使用预处理语句）
-        $updateStmt = $mysqli->prepare("UPDATE {$tablePrefix}book 
+        $updateStmt = $mysqli->prepare("UPDATE {$_SESSION['db']['prefix']}book 
                                       SET likes = likes + 1 
                                       WHERE id = ?");
         $updateStmt->bind_param('i', $messageId);
         $updateStmt->execute();
         
         // 记录点赞
-        $insertStmt = $mysqli->prepare("INSERT INTO {$tablePrefix}like_records 
-                                       (message_id, ip_address) 
-                                       VALUES (?, ?)");
-        $insertStmt->bind_param('is', $messageId, $ip);
+        $insertStmt = $mysqli->prepare("INSERT INTO {$_SESSION['db']['prefix']}like 
+                                       (message_id, ip, user_agent, session_id) 
+                                       VALUES (?, ?, ?, ?)");
+        $insertStmt->bind_param('isss', $messageId, $ip, $userAgent, $sessionId);
         $insertStmt->execute();
         
         // 获取最新点赞数
-        $countStmt = $mysqli->prepare("SELECT likes FROM {$tablePrefix}book 
+        $countStmt = $mysqli->prepare("SELECT likes FROM {$_SESSION['db']['prefix']}book 
                                       WHERE id = ?");
         $countStmt->bind_param('i', $messageId);
         $countStmt->execute();

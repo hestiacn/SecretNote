@@ -720,6 +720,7 @@ if ($action === 'logs') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理后台 - 蓝宝石留言本</title>
+    <link rel="icon" href="../assets/image/favicon.ico" type="image/ico">
     <link href="../assets/bootstrap-5.3.3/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/bootstrap-icons-1.11.3/font/bootstrap-icons.min.css">
     <style>

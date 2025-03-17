@@ -62,33 +62,7 @@ require_once __DIR__ . '/include/function.php';
 $views = incrementVisitCount();
 
 // 会话管理
-if (session_status() === PHP_SESSION_NONE) {
-    session_start([
-        'cookie_secure' => isset($_SERVER['HTTPS']),
-        'cookie_httponly' => true,
-        'cookie_samesite' => 'Strict'
-    ]);
-}
-
-// 安全函数
-function sanitizeInput(string $input): string {
-    return htmlspecialchars(strip_tags(trim($input)), ENT_QUOTES, 'UTF-8');
-}
-
-function generateCSRFToken(): string {
-    if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
-    return $_SESSION['csrf_token'];
-}
-
-function validateCSRFToken(string $token): bool {
-    return hash_equals($_SESSION['csrf_token'] ?? '', $token);
-}
-
-function searchreplace(string $input): string {
-    return str_replace(['"', "'", "%"], ['\"', "\'", "\\%"], $input);
-}
+initCSRFToken();
 
 // 数据库连接
 try {
@@ -103,13 +77,18 @@ try {
     exit();
 }
 
-// 初始化搜索参数
+// 在初始化搜索参数部分修改如下
 $searchParams = [
-    'searchstr' => isset($_GET['searchstr']) ? sanitizeInput($_GET['searchstr']) : '',
-    'search_nicheng' => isset($_GET['search_nicheng']) ? true : false,
+    'searchstr' => isset($_GET['searchstr']) ? $_GET['searchstr'] : '',
+    'search_nicheng' => isset($_GET['search_nicheng']),
     'typeid'    => isset($_GET['typeid']) ? intval($_GET['typeid']) : -1,
     'page'      => isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1
 ];
+
+// 新增输入验证（在构建查询条件前）
+if (mb_strlen($searchParams['searchstr']) > 100) {
+    die("搜索关键词过长");
+}
 
 // 构建动态查询条件
 $where = ["shenhe = 1"];
@@ -125,27 +104,33 @@ if ($searchParams['typeid'] >= 0) {
 
 // 处理搜索条件
 if (!empty($searchParams['searchstr'])) {
-    $searchValue = $mysqli->real_escape_string($searchParams['searchstr']);
-    $searchValue = "%$searchValue%";
+    $searchValue = "%{$searchParams['searchstr']}%";
     
     if ($searchParams['search_nicheng']) {
         $where[] = "nicheng LIKE ?";
         $bindParams[] = $searchValue;
         $bindTypes .= 's';
     } else {
-        $searchFields = ['thetitle', 'content', 'nicheng', 'reply', 'email', 'qq', 'ip'];
+        $searchFields = ['thetitle', 'content', 'nicheng', 'reply'];
         
-        if (!empty($searchFields)) {
-            $conditions = [];
-            foreach ($searchFields as $field) {
-                $conditions[] = "$field LIKE ?";
-                $bindParams[] = $searchValue;
-                $bindTypes .= 's';
-            }
-            $where[] = '(' . implode(' OR ', $conditions) . ')';
+        $conditions = [];
+        foreach ($searchFields as $field) {
+            $conditions[] = "$field LIKE ?";
+            $bindParams[] = $searchValue;
+            $bindTypes .= 's';
         }
+        $where[] = '(' . implode(' OR ', $conditions) . ')';
     }
 }
+
+// 改进分页参数处理（保留所有搜索参数）
+function buildPaginationUrl(int $page, array $params): string {
+    $params['page'] = $page;
+    return 'index.php?' . http_build_query($params);
+}
+
+// 在分页循环中使用
+$paginationBase = buildPaginationUrl(0, $searchParams);
 
 // 获取所有分类
 $categories = [];
@@ -208,10 +193,10 @@ $messages = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="csrf-token" content="<?= generateCSRFToken() ?>">
+    <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES) ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= get_content('global.page_title') ?></title>
-    <link rel="icon" href="./assets/image/favicon.ico" type="image/ico">
+    <link rel="icon" href="../assets/image/favicon.ico" type="image/ico">
     <link href="./assets/bootstrap-5.3.3/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="./assets/bootstrap-icons-1.11.3/font/bootstrap-icons.min.css">
     <link href="./assets/bootstrap-5.3.3/css/inc.css" rel="stylesheet">
@@ -248,19 +233,19 @@ $messages = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                 </a>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <div class="alert alert-warning my-3">暂时没有可用的分类</div>
+                            <div class="alert alert-warning my-3">没有可用的分类</div>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
 
-		<div class="row mb-4">
-		    <div class="col-12">
-		        <a href="edit.php" class="btn btn-outline-primary category-badge">发表留言</a>
-		    </div>
-		</div>
-
+	<div class="row mb-4">
+	    <div class="col-12 d-flex flex-md-row flex-column justify-content-start align-items-center">
+	        <a href="edit.php" class="btn btn-outline-primary btn-lg category-badge mb-3 mb-md-0" target="_blank" rel="noopener noreferrer">发表留言</a>
+	        <a href="/admin/adminlogin.php" class="btn btn-outline-primary btn-lg category-badge mx-5" target="_blank" rel="noopener noreferrer">登录后台</a>
+	    </div>
+	</div>
         <div class="row mb-4">
             <div class="col-md-4">
                 <div class="mb-3 d-flex align-items-center">
@@ -274,42 +259,42 @@ $messages = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
         <div class="row mb-4">
             <div class="col-12">
-                <form class="search-form" method="get" action="index.php">
-                    <input type="hidden" name="searchmode" value="1">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <input type="text" class="form-control" name="searchstr" 
-                                   placeholder="<?= get_content('index.search_placeholder') ?>">
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="searchNicheng" name="search_nicheng"
-                                       <?= isset($searchParams['search_nicheng']) ? 'checked' : '' ?>>
-                                <label class="form-check-label" for="searchNicheng">按昵称搜索</label>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select" name="typeid">
-                                <option value="-1" 
-                                        <?= ($searchParams['typeid'] ?? -1) == -1 ? 'selected' : '' ?>>
-                                    <?= get_content('global.all_categories') ?>
-                                </option>
-                                <?php 
-                                $types = $mysqli->query("SELECT * FROM ".DB_PREFIX."typeid ORDER BY id");
-                                while ($type = $types->fetch_assoc()): ?>
-                                    <option value="<?= $type['id'] ?>" <?= $searchParams['typeid'] == $type['id'] ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($type['typename']) ?>
-                                    </option>
-                                <?php endwhile; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <?= get_content('global.search_btn') ?>
-                            </button>
-                        </div>
-                    </div>
-                </form>
+			<!-- 改进搜索表单（保留用户输入） -->
+			<form class="search-form" method="get" action="index.php">
+			    <input type="hidden" name="searchmode" value="1">
+			    <div class="row">
+			        <div class="col-md-3">
+			            <input type="text" class="form-control" name="searchstr" 
+			                   placeholder="<?= get_content('index.search_placeholder') ?>"
+			                   value="<?= htmlspecialchars($searchParams['searchstr']) ?>">
+			        </div>
+			        <div class="col-md-3">
+			            <div class="form-check">
+			                <input type="checkbox" class="form-check-input" id="searchNicheng" name="search_nicheng"
+			                       <?= $searchParams['search_nicheng'] ? 'checked' : '' ?>>
+			                <label class="form-check-label" for="searchNicheng">按昵称搜索</label>
+			            </div>
+			        </div>
+			        <div class="col-md-3">
+			            <select class="form-select" name="typeid">
+			                <option value="-1" <?= $searchParams['typeid'] == -1 ? 'selected' : '' ?>>
+			                    <?= get_content('global.all_categories') ?>
+			                </option>
+			                <?php foreach ($categories as $cat): ?>
+			                    <option value="<?= $cat['id'] ?>" 
+			                        <?= $searchParams['typeid'] == $cat['id'] ? 'selected' : '' ?>>
+			                        <?= htmlspecialchars($cat['typename']) ?>
+			                    </option>
+			                <?php endforeach; ?>
+			            </select>
+			        </div>
+			        <div class="col-md-3">
+			            <button type="submit" class="btn btn-primary w-100">
+			                <?= get_content('global.search_btn') ?>
+			            </button>
+			        </div>
+			    </div>
+			</form>
             </div>
         </div>
 
@@ -378,40 +363,45 @@ $messages = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                         </div>
                                     </div>
                                 </div>
-                                <div class="mt-4 border-top pt-3">
-                                    <h6 class="fw-bold text-primary mb-3 d-flex align-items-center">
-                                        <i class="bi-chat-quote me-2"></i>
-                                        <?= get_content('messages.content_title') ?>
-                                    </h6>
-                                    <?php if (!empty($message['qiaoqiaopass'])): ?>
-                                        <div class="encrypted-content" data-id="<?= $message['id'] ?>">
-                                            <div class="alert alert-warning d-flex align-items-center">
-                                                <i class="bi bi-lock me-2"></i>
-                                                <span>内容被用户加密，请输入密码查看</span>
-                                            </div>
-                                            <div class="input-group mb-3">
-                                                <input type="password" 
-                                                       class="form-control password-input" 
-                                                       placeholder="请输入访问密码"
-                                                       data-id="<?= $message['id'] ?>">
-                                                <button class="btn btn-outline-secondary verify-btn" 
-                                                        type="button" 
-                                                        data-id="<?= $message['id'] ?>">
-                                                    <i class="bi bi-check"></i>
-                                                </button>
-                                            </div>
-                                            <div class="invalid-feedback text-danger mb-2"></div>
-                                        </div>
-                                        <div class="original-content" 
-                                             data-content="<?= htmlspecialchars($message['content']) ?>" 
-                                             style="display:none;">
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="content-box bg-light p-3 rounded rich-text">
-                                            <p><?= renderRichText($message['content']) ?></p>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
+				            <div class="mt-4 border-top pt-3">
+				                <h6 class="fw-bold text-primary mb-3 d-flex align-items-center">
+				                    <i class="bi-chat-quote me-2"></i>
+				                    <?= get_content('messages.content_title') ?>
+				                </h6>
+				                <?php if (!empty($message['qiaoqiaopass'])): ?>
+				                    <!-- 加密内容部分 -->
+							<div class="encrypted-content" data-id="<?= $message['id'] ?>">
+							    <!-- 添加提示信息包裹容器 -->
+							    <div class="password-prompt-area">
+							        <div class="alert alert-warning d-flex align-items-center">
+							            <i class="bi bi-lock me-2"></i>
+							            <span>内容已加密，请输入访问密码</span>
+							        </div>
+							        <div class="input-group mb-3">
+							            <input type="password" 
+							                   class="form-control password-input" 
+							                   placeholder="请输入访问密码"
+							                   data-id="<?= $message['id'] ?>">
+							            <button class="btn btn-outline-secondary verify-btn" 
+							                    type="button" 
+							                    data-id="<?= $message['id'] ?>">
+							                <i class="bi bi-check"></i>
+							            </button>
+							        </div>
+							        <div class="invalid-feedback text-danger mb-2"></div>
+							    </div>
+							    <!-- 加密内容保持原有结构 -->
+							    <div class="encrypted-text" style="display:none;">
+							        <?= renderRichText($message['content']) ?>
+							    </div>
+							</div>
+				                <?php else: ?>
+				                    <!-- 未加密内容正常显示 -->
+				                    <div class="content-box bg-light p-3 rounded rich-text">
+				                        <p><?= renderRichText($message['content']) ?></p>
+				                    </div>
+				                <?php endif; ?>
+				            </div>
                                 <?php if (!empty($message['reply'])): ?>
                                     <div class="mt-4 border-top pt-3">
                                         <h6 class="fw-bold text-success mb-3 d-flex align-items-center">
@@ -521,56 +511,68 @@ $messages = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 	</div>
     <script src="../assets/bootstrap-5.3.3/js/bootstrap.bundle.min.js"></script>
 <script>
-    // 密码验证处理
-    const PasswordHandler = {
-        init: () => {
-            document.querySelectorAll('.verify-btn').forEach(btn => {
-                btn.dataset.originalHtml = btn.innerHTML;
-                btn.addEventListener('click', PasswordHandler.handleVerify);
-            });
-        },
 
-        handleVerify: async function() {
-            const messageId = this.dataset.id;
-            const container = this.closest('.encrypted-content');
-            const input = container.querySelector('.password-input');
-            const feedback = container.querySelector('.invalid-feedback');
+    document.addEventListener('DOMContentLoaded', function() {
+        // 密码验证功能
+        document.querySelectorAll('.verify-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const messageId = this.dataset.id;
+                const passwordInput = this.previousElementSibling;
+                const password = passwordInput.value;
+                const errorDiv = this.closest('.encrypted-content').querySelector('.invalid-feedback');
+                const encryptedContentDiv = this.closest('.encrypted-content');
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
-            if (!input.value) {
-                feedback.textContent = '密码不能为空';
-                return;
-            }
-
-            Utils.setButtonState(this, true);
-            
-            try {
-                const response = await Utils.fetchAPI('verify_password.php', 'POST', {
-                    id: messageId,
-                    password: input.value
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    PasswordHandler.showDecryptedContent(container, data.content);
-                } else {
-                    feedback.textContent = data.message || '密码验证失败';
+                if (!password) {
+                    errorDiv.textContent = '请输入密码';
+                    errorDiv.style.display = 'block';
+                    return;
                 }
-            } catch (error) {
-                console.error('验证失败:', error);
-                feedback.textContent = '服务器错误，请稍后再试';
-            } finally {
-                Utils.setButtonState(this, false);
-            }
-        },
 
-        showDecryptedContent: (container, content) => {
-            const originalContent = container.nextElementSibling;
-            originalContent.querySelector('[data-content]').textContent = content;
-            originalContent.style.display = 'block';
-            container.style.display = 'none';
-        }
-    };
+	        try {
+	            const response = await fetch('/include/verify_password.php', {
+	                method: 'POST',
+	                headers: {
+	                    'Content-Type': 'application/json',
+	                    'X-CSRF-Token': csrfToken
+	                },
+	                body: JSON.stringify({
+	                    id: messageId,
+	                    password: password,
+	                    csrf_token: csrfToken
+	                })
+	            });
+	
+	            const data = await response.json();
+	
+	            if (data.success) {
+	                // 隐藏整个密码提示区域
+	                const promptArea = encryptedContentDiv.querySelector('.password-prompt-area');
+	                promptArea.style.display = 'none';
+	                
+	                // 显示并渐变展示加密内容
+	                const encryptedText = encryptedContentDiv.querySelector('.encrypted-text');
+	                encryptedText.style.display = 'block';
+	                setTimeout(() => {
+	                    encryptedText.classList.add('show');
+	                }, 50);
+	                
+	                // 清除错误提示
+	                errorDiv.textContent = '';
+	                errorDiv.style.display = 'none';
+	            } else {
+	                errorDiv.textContent = data.error || '密码验证失败';
+	                errorDiv.style.display = 'block';
+	                // 清空密码框
+	                passwordInput.value = '';
+	            }
+	        } catch (error) {
+	            console.error('验证错误:', error);
+	            errorDiv.textContent = '服务器连接失败';
+	            errorDiv.style.display = 'block';
+	        }
+	    });
+	});
 
     // 通用功能模块
     const CommonFeatures = {
@@ -653,34 +655,10 @@ $messages = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         }
     };
 
-    // 工具函数
-    const Utils = {
-        setButtonState: (button, isLoading) => {
-            if (isLoading) {
-                button.innerHTML = button.dataset.loadingText;
-                button.disabled = true;
-            } else {
-                button.innerHTML = button.dataset.originalHtml;
-                button.disabled = false;
-            }
-        },
-
-        fetchAPI: (url, method = 'GET', data = null) => {
-            const options = {
-                method: method,
-                headers: {
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json'
-                }
-            };
-
-            if (data !== null) {
-                options.body = JSON.stringify(data);
-            }
-
-            return fetch(url, options);
-        }
-    };
+    // 初始化通用功能
+    CommonFeatures.initCopyButtons();
+    CommonFeatures.initReportButtons();
+    CommonFeatures.initLikeButtons();
 
     // 处理视频加载错误
     function handleVideoError(iframe) {
@@ -697,7 +675,14 @@ $messages = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             </div>
         `;
     }
-    
+});
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-Token': '<?= $_SESSION['csrf_token'] ?>'
+    }
+});
+
+</script>
 </script>
 </body>
 </html>

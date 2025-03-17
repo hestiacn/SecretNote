@@ -1,26 +1,26 @@
 <?php
+// 启用严格错误报告
 declare(strict_types=1);
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
-
-// 增强会话管理
-if (session_status() === PHP_SESSION_NONE) {
-    session_start([
-        'cookie_secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
-        'cookie_httponly' => true,
-        'cookie_samesite' => 'Strict',
-        'name' => 'ADMIN_SESS'  // 添加独立会话名称
-    ]);
-}
 
 // 安全头设置
 header("X-Frame-Options: DENY");
 header("X-XSS-Protection: 1; mode=block");
 header("X-Content-Type-Options: nosniff");
-header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'");
+header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data:; 'self'");
 header("Referrer-Policy: strict-origin-when-cross-origin");
+// 增强会话管理
+session_start([
+    'cookie_secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+    'cookie_httponly' => true,
+    'cookie_samesite' => 'Strict',
+    'name' => 'ADMIN_SESS',
+    'use_strict_mode' => true,
+    'cookie_lifetime' => 3600 
+]);
 
-// 加载配置（使用绝对路径）/home/www/web/flarum.gdszjcd.cn/public_html/include/lang/zh_CN.json
+// 加载配置（使用绝对路径）
 define('CONFIG_FILE', __DIR__.'/../include/config.php');
 require_once __DIR__ . '/../include/i18n.php';
 
@@ -119,56 +119,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= __('login_page.title') ?></title>
+    <link rel="icon" href="../assets/image/favicon.ico" type="image/ico">
     <link href="../assets/bootstrap-5.3.3/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/bootstrap-icons-1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            padding: 2rem 0;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background-color: #0d6efd;
-            color: white;
-            padding: 2rem;
-            border-radius: 0 0 1rem 1rem;
-        }
-
-        .content {
-            padding: 2rem;
-        }
-
-        .btn-primary {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
-
-        .btn-primary:hover {
-            background-color: #0b5ed7;
-            border-color: #0b5ed7;
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/bootstrap-5.3.3/css/logstyles.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1 class="display-5 fw-bold mb-3"><?= __('login_page.header') ?></h1>
+            <h1 class="display-5 fw-bold mb-3 text-center"><?= __('login_page.header') ?></h1>
         </div>
 
         <div class="content">
@@ -187,33 +152,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="mb-3">
                     <label class="form-label"><?= __('login_page.form.password_label') ?></label>
-                    <div class="input-group">
-                        <input type="password" class="form-control" name="pass" required>
-                        <button type="button" class="btn btn-outline-secondary password-toggle">
+                    <div class="input-group" id="password-container">
+                        <input type="password" class="form-control" name="pass" required id="password-input">
+                        <button type="button" class="btn btn-outline-secondary password-toggle" title="显示密码">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">
+                <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check2-circle me-2"></i><?= __('login_page.form.submit_button') ?>
                 </button>
             </form>
         </div>
     </div>
-
-    <script>
-        document.body.addEventListener('click', function(e) {
-            if (e.target.closest('.password-toggle')) {
-                const btn = e.target.closest('.password-toggle');
-                const input = btn.previousElementSibling;
-                const icon = btn.querySelector('i');
-                if (input && input.tagName === 'INPUT') {
-                    input.type = input.type === 'password' ? 'text' : 'password';
-                    icon.classList.toggle('bi-eye');
-                    icon.classList.toggle('bi-eye-slash');
-                }
-            }
-        });
-    </script>
+    <script src="../assets/bootstrap-5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/bootstrap-5.3.3/js/script.js"></script>
 </body>
 </html>

@@ -10,7 +10,6 @@
 
 /* 基础布局 */
 .container {
-    backdrop-filter: blur(8px) saturate(120%);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 1.25rem;
     margin: 2rem auto;
@@ -176,7 +175,7 @@
 .image-wrapper img {
     width: 100%;
     height: auto;
-    max-width: 1400px;
+    max-width: 1600px;
     display: block;
     margin: 0 auto;
 }
